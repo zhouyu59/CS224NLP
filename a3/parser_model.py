@@ -73,6 +73,15 @@ class ParserModel(nn.Module):
         ### 
         ### See the PDF for hints.
 
+        self.embed_to_hidden_weight=nn.Parameter(nn.init.xavier_uniform_(torch.empty(self.n_features*self.embed_size,self.hidden_size)))
+        self.embed_to_hidden_bias=nn.Parameter(nn.init.uniform_(torch.empty(self.hidden_size)))
+
+        self.dropout=nn.Dropout(p=self.dropout_prob)
+
+        self.hidden_to_logits_weight=nn.Parameter(nn.init.xavier_uniform_(torch.empty(self.hidden_size,self.n_classes)))
+        self.hidden_to_logits_bias=nn.Parameter(nn.init.uniform_(torch.empty(self.n_classes)))
+
+
 
 
 
@@ -106,6 +115,10 @@ class ParserModel(nn.Module):
         ###     Gather: https://pytorch.org/docs/stable/torch.html#torch.gather
         ###     View: https://pytorch.org/docs/stable/tensors.html#torch.Tensor.view
         ###     Flatten: https://pytorch.org/docs/stable/generated/torch.flatten.html
+        x=torch.index_select(self.embeddings,0,torch.flatten(w)).view(w.size(0),-1)
+
+
+
 
 
 
@@ -143,6 +156,15 @@ class ParserModel(nn.Module):
         ### Please see the following docs for support:
         ###     Matrix product: https://pytorch.org/docs/stable/torch.html#torch.matmul
         ###     ReLU: https://pytorch.org/docs/stable/nn.html?highlight=relu#torch.nn.functional.relu
+
+        X=self.embedding_lookup(w)
+        hiddenstate=torch.matmul(X,self.embed_to_hidden_weight)+self.embed_to_hidden_bias
+        hiddenrelu=F.relu(hiddenstate)
+        hiddenrelu=self.dropout(hiddenrelu)
+        logits=torch.matmul(hiddenrelu,self.hidden_to_logits_weight)+self.hidden_to_logits_bias
+
+
+
 
 
         ### END YOUR CODE
